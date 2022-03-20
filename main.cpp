@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
         /* We don't need any more the device list. Free it */
         pcap_freealldevs(alldevs);
-    //QApplication a(argc, argv);
+    QApplication a(argc, argv);
     //MainWindow w;
     //w.show();
     //return a.exec();
