@@ -4,6 +4,7 @@
 #include "pcap.h"
 #include "stdio.h"
 #include "QDebug"
+#include <winsock2.h>
 
 int main(int argc, char* argv[])
 {

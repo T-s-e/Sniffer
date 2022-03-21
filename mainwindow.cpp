@@ -3,6 +3,8 @@
 #include "pcap.h"
 #include "stdio.h"
 #include "QDebug"
+#include <winsock2.h>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -18,6 +20,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
+
     pcap_if_t *alldevs;
     pcap_if_t *d;
     int i = 0;
@@ -29,20 +32,19 @@ void MainWindow::on_pushButton_clicked()
             fprintf(stderr, "Error in pcap_findalldevs_ex: %s\n", errbuf);
             exit(1);
         }
-
         /* Print the list */
         for (d = alldevs; d != NULL; d = d->next)
         {
-            qDebug("%d. %s", ++i, d->name);
+            printf("%d. %s", ++i, d->name);
             if (d->description)
-                qDebug(" (%s)\n", d->description);
+                printf(" (%s)\n", d->description);
             else
                  qDebug(" (No description available)\n");
         }
 
         if (i == 0)
         {
-             qDebug("\nNo interfaces found! Make sure Npcap is installed.\n");
+             printf("\nNo interfaces found! Make sure Npcap is installed.\n");
             return;
         }
 
@@ -55,3 +57,16 @@ void MainWindow::on_pushButton_clicked()
 
 
 
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    fflush(stdout);
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    const char* a;
+    a=pcap_lib_version();
+    printf("%s",a);
+
+}
