@@ -11,9 +11,14 @@ CONFIG += c++11 -lwpcap -lPacket -lWs2_32
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    packet_info.cpp \
+    worktread.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    packet_info.h \
+    protocol.h \
+    worktread.h
 
 FORMS += \
     mainwindow.ui

@@ -6,106 +6,89 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>838</width>
-    <height>629</height>
+    <width>980</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QWidget" name="widget" native="true">
-      <widget class="QPushButton" name="pushButton">
-       <property name="geometry">
-        <rect>
-         <x>11</x>
-         <y>11</y>
-         <width>93</width>
-         <height>29</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>扫描网卡</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="geometry">
-        <rect>
-         <x>111</x>
-         <y>11</y>
-         <width>93</width>
-         <height>29</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>刷新缓冲区</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_3">
-       <property name="geometry">
-        <rect>
-         <x>211</x>
-         <y>11</y>
-         <width>93</width>
-         <height>29</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>开始抓包</string>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="lineEdit">
-       <property name="geometry">
-        <rect>
-         <x>660</x>
-         <y>13</y>
-         <width>145</width>
-         <height>25</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="comboBox">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>50</y>
-         <width>791</width>
-         <height>26</height>
-        </rect>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>300</width>
-         <height>0</height>
-        </size>
-       </property>
-      </widget>
-      <widget class="QWidget" name="widget_2" native="true">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>92</y>
-         <width>811</width>
-         <height>471</height>
-        </rect>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QTreeWidget" name="treeWidget">
-          <column>
-           <property name="text">
-            <string notr="true">1</string>
-           </property>
-          </column>
-         </widget>
-        </item>
-        <item>
-         <widget class="QTableWidget" name="tableWidget"/>
-        </item>
-       </layout>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QWidget" name="widget_3" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="pushButton">
+            <property name="text">
+             <string>扫描网卡</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_2">
+            <property name="text">
+             <string>停止抓包</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_3">
+            <property name="text">
+             <string>开始抓包</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBox">
+         <property name="minimumSize">
+          <size>
+           <width>300</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_2" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QTreeWidget" name="treeWidget">
+            <column>
+             <property name="text">
+              <string notr="true">1</string>
+             </property>
+            </column>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableWidget" name="tableWidget"/>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_4" native="true">
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QTextEdit" name="textEdit_2"/>
+             </item>
+             <item>
+              <widget class="QTextEdit" name="textEdit"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
    </layout>
@@ -115,7 +98,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>838</width>
+     <width>980</width>
      <height>26</height>
     </rect>
    </property>
