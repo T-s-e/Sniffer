@@ -7,7 +7,7 @@
 #include "QDebug"
 #include <winsock2.h>
 #include"worktread.h"
-#include"list"
+#include"QVector"
 #include "qstring.h"
 #include"packet_info.h"
 #include"protocol.h"
@@ -40,6 +40,10 @@ private slots:
 
 
 
+    void on_tableWidget_cellClicked(int row, int column);
+
+    void on_textEdit_2_selectionChanged();
+
 private:
     Ui::MainWindow *ui;
     pcap_if_t *alldevs;
@@ -48,7 +52,7 @@ private:
     bool working=false;
     pcap_t* devhandle;
     workthread *worker;
-    std::list<packet_info*> pkt_list;
+    QVector<packet_info*> pkt_list;
 
     int packet_num=0;
 };

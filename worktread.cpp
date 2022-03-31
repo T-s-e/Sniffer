@@ -11,6 +11,7 @@ void workthread::run(){
 
     /* handle the packet */
     while(control){
+
             res = pcap_next_ex( adhandle, &header, &pkt_data);
             if(res == 0)
                 /* Timeout elapsed */

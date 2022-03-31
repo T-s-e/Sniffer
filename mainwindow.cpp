@@ -8,22 +8,42 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->comboBox->addItem("no card");
-    /*creat a work thread and connect singal*/
+
+
+    /*Creat a Work Thread and Connect Singal*/
     worker = new workthread(this);
     //connect(worker, &workthread::finished, worker, &QObject::deleteLater);
-    //connect(worker, &workthread::c2o, worker, &workthread::o2o);
     connect(worker, &workthread::pacinfo, this, &MainWindow::handleResults);
     connect(worker, &workthread::errorinfo, this, &MainWindow::handleError);
 
+    /*Set the Table*/
+    ui->tableWidget->setColumnCount(6);
+    ui->tableWidget->verticalHeader()->setDefaultSectionSize(30);
+    QStringList title={"Time","Source","Destination","Protocol","Length","Info"};
+    ui->tableWidget->setHorizontalHeaderLabels(title);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableWidget->setShowGrid(false);
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    /*Set the TextEdit*/
+    ui->textEdit->setFont(QFont(tr("Consolas"), 10));
+    ui->textEdit_2->setFont(QFont(tr("Consolas"), 10));
+    ui->textEdit->setReadOnly(true);
+    ui->textEdit_2->setReadOnly(true);
+
+    /*Set the TreeWidget*/
+    ui->treeWidget->setFont(QFont(tr("Consolas"), 12));
+    ui->treeWidget->setHeaderHidden(true);
 }
 
 MainWindow::~MainWindow()
 {
-    /*stop the work*/
+    /*Stop the Work*/
     worker->control=false;
     worker->wait();
     pcap_close(devhandle);
-    /*delet everthing*/
+
+    /*Delet Everthing*/
     delete ui;
 }
 
@@ -38,9 +58,9 @@ void MainWindow::on_pushButton_clicked()
         if (pcap_findalldevs(&alldevs, errbuf) == -1)
         {
             ui->comboBox->addItem("Error in pcap_findalldevs_ex:"+(QString)errbuf);
-            //fprintf(stderr, "Error in pcap_findalldevs_ex: %s\n", errbuf);
             exit(1);
         }
+
         /* Print the list */
         ui->comboBox->clear();
         ui->comboBox->addItem("choose card");
@@ -65,12 +85,11 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::on_pushButton_2_clicked()
 {
 
-    /*check the work*/
+    /*Check the Work*/
    if(working==false)
        return;
 
-
-    /*stop the work*/
+    /*Stop the Work*/
     worker->control=false;
     worker->wait();
     pcap_close(devhandle);
@@ -80,30 +99,35 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_pushButton_3_clicked()
 {
-    /*check the index*/
+    /*Check the Index*/
     int index=ui->comboBox->currentIndex();
     if(index==0)
         return;
 
-
-    /*stop the last work*/
+    /*Stop the Last Work*/
     if(working==true)
     {
         worker->control=false;
         worker->wait();
         pcap_close(devhandle);
+        /*clear last output*/
+        ui->tableWidget->clearContents();
+        ui->tableWidget->setRowCount(0);
+        ui->textEdit->clear();
+        ui->textEdit_2->clear();
+        ui->treeWidget->clear();
+        packet_num=0;
+        pkt_list.clear();
+        qDebug()<<"pkt_list: "<<pkt_list.size();
     }
 
-
-    /*get the choosen device*/
-
+    /*Get the Choosen Device*/
     int i=0;
     if(index!=0){
         for(device=alldevs;i++<index-1;device=device->next);
     }
 
-
-    /*open the choosen device*/
+    /*Open the Choosen Device*/
     if((devhandle= pcap_open_live(device->name,	// name of the device
                                      65536,			// portion of the packet to capture.
                                                     // 65536 grants that the whole packet will be captured on all the MACs.
@@ -112,28 +136,27 @@ void MainWindow::on_pushButton_3_clicked()
                                      errbuf			// error buffer
                                      ))==NULL)
     {
-
         statusBar()->showMessage("error");
         return;
     }
-    /*check the datalink*/
+
+    /*Check the Datalink*/
     if(pcap_datalink(devhandle) != DLT_EN10MB)
     {
         statusBar()->showMessage("error");
         return;
     }
 
-    /*set the worker*/
+    /*Set the Worker*/
     worker->adhandle=devhandle;
     //pcap_setmode(devhandle,MODE_MON);
 
-    /*start the work*/
+    /*Start the Work*/
     worker->control=true;
     worker->start();
     working=true;
 
-
-    /*show some message*/
+    /*Show some Message*/
     printf("\nlistening on %s...\n", device->description);
     fflush(stdout);
     statusBar()->showMessage(device->description);
@@ -142,58 +165,105 @@ void MainWindow::on_pushButton_3_clicked()
 }
 
 void MainWindow::handleResults(packet_info* result){
-    //ui->lineEdit->setText(result);
-    /*join the packet to the list*/
+
+    /*Join the Packet to the Vector*/
     pkt_list.push_back(result);
 
-    /*print cap num*/
-    //qDebug()<<result->timestr;
-    packet_num++;
+    /*Print Debug Info*/
+    qDebug()<<"pkt_list: "<<pkt_list.size()<<result->timestr<<"len:"<<result->caplen<<"src:"<<result->src<<"des:"<<result->des<<"protocol:"<<result->protocol<<result->descr;
 
-    ui->lineEdit->setText(QString::number(packet_num));
-    /*get the ether head */
-    //qDebug()<<byteToHex(eth->ether_des_host,sizeof eth->ether_des_host);
-    //qDebug()<<byteToHex(eth->ether_src_host,sizeof eth->ether_src_host);
-    //ui->textEdit->append(byteToHex(eth->ether_des_host,sizeof eth->ether_des_host));
-    //ui->textEdit->append(byteToHex(eth->ether_src_host,sizeof eth->ether_src_host));
-
-    /*print data in hex*/
-    ui->textEdit->append(byteToHex(result->pkt_data,sizeof result->pkt_data));
-
-    /*print data in char*/
-    QString str;
-    char temp[result->caplen];
-    memcpy_s(temp,result->caplen,result->pkt_data,result->caplen);
-    for(int i=0;i<result->caplen;i++){
-        if(temp[i]<32||temp[i]>126)
-        {
-            temp[i]=' ';
-        }
+    /*Print Data in Table*/
+    QColor color;
+    if(result->protocol == "TCP"){
+        color = QColor(216,191,216);
+    }else if(result->protocol == "IP"){
+        color = QColor(144,238,144);
     }
-    QByteArray temp2=QByteArray((char *)temp,result->caplen);
-    //str = QString(QLatin1String(temp));
-    //ui->textEdit->append(str);
-    str=QString(temp2);
-    ui->textEdit_2->append(str);
-
-    /*print debug info*/
-    qDebug()<<result->timestr<<"len:"<<result->caplen<<"src:"<<result->src<<"des:"<<result->des<<"protocol:"<<result->protocol<<result->descr;
-
-
+    else if(result->protocol == "HTTP"){
+        color = QColor(238,238,0);
+    }
+    else if(result->protocol == "DNS"){
+        color = QColor(255,255,224);
+    }else if(result->protocol == "HTTPS"){
+        color = QColor(210,149,210);
+    }else{
+        color = QColor(255,218,185);
+    }
+    ui->tableWidget->insertRow(packet_num);
+    ui->tableWidget->setItem(packet_num,0,new QTableWidgetItem(result->timestr));
+    ui->tableWidget->setItem(packet_num,1,new QTableWidgetItem(result->src));
+    ui->tableWidget->setItem(packet_num,2,new QTableWidgetItem(result->des));
+    ui->tableWidget->setItem(packet_num,3,new QTableWidgetItem(result->protocol));
+    ui->tableWidget->setItem(packet_num,4,new QTableWidgetItem(QString::number(result->len)));
+    ui->tableWidget->setItem(packet_num,5,new QTableWidgetItem(result->descr));
+    ui->lineEdit->setText(QString::number(packet_num));
+    for(int i = 0;i < 6;i++){
+        ui->tableWidget->item(packet_num,i)->setBackground(color);
+    }
+    packet_num++;
     return;
 }
 void MainWindow::handleError(char* result){
     statusBar()->showMessage(result);
-    /*check the work*/
+
+    /*Check the Work*/
    if(working==false)
        return;
 
-
-    /*stop the work*/
+    /*Stop the Work*/
     worker->control=false;
     worker->wait();
     pcap_close(devhandle);
     working=false;
 }
+
+
+
+void MainWindow::on_tableWidget_cellClicked(int row, int column)
+{
+
+    /*get the clicked packet*/
+    packet_info *cresult=pkt_list[row];
+    ui->textEdit->clear();
+    ui->textEdit_2->clear();
+
+    /*Print Data in TestEdit*/
+
+        /*print data in hex*/
+        ui->textEdit->append(byteToHex(cresult->pkt_data,cresult->caplen));
+
+        /*print data in char*/
+        QString str="";
+        char temp[cresult->caplen];
+        memcpy_s(temp,cresult->caplen,cresult->pkt_data,cresult->caplen);
+        for(int i=0;i<cresult->caplen;i++){
+            if(temp[i]<32||temp[i]>126)
+            {
+                str.append("·");
+            }
+            else{
+                str.append(temp[i]);
+
+            }
+            str.append("  ");
+        }
+        ui->textEdit_2->append(str);
+
+    /*Print Data in TreeWidget*/
+    ui->treeWidget->clear();
+
+        /*Print Physic Level Info*/
+        QString phy_info="Frame: "+QString::number(row+1)+" "+QString::number(cresult->len)+" bytes on wire, "
+                +QString::number(cresult->caplen)+" bytes captured, on interface "+device->description;
+        QTreeWidgetItem*pitem=new QTreeWidgetItem(QStringList()<<phy_info);
+        ui->treeWidget->addTopLevelItem(pitem);
+
+        /*Print Physic Level Info*/
+        QString d_info=cresult->link_info();
+        QTreeWidgetItem*ditem=new QTreeWidgetItem(QStringList()<<d_info);
+        ui->treeWidget->addTopLevelItem(ditem);
+
+}
+
 
 
