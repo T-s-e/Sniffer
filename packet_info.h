@@ -3,7 +3,9 @@
 #include"winsock2.h"
 #include"protocol.h"
 #include"qstring.h"
-QString byteToHex(u_char *str, int size);
+#include"iphlpapi.h"
+#include"tcpmib.h"
+QString byteToHex(u_char *str, int size,bool pos);
 QString macbyteToHex(u_char *str, int size);
 QString getip(u_int addr);
 class packet_info
@@ -21,6 +23,8 @@ public:
     int trans_type=0;
     char* app_lh=NULL;
     int app_type=0;
+
+    QString ser_name;
     QString src;
     QString des;
     QString protocol;
@@ -36,9 +40,9 @@ public:
     void trans_handle(char *raw_data);
     void app_handle(char *raw_data);
     QString link_info();
-    QString net_info();
-    QString trans_info();
-    QString app_info();
+    QString* net_info();
+    QString *trans_info();
+    QString *app_info();
 };
 
 #endif // PACKET_INFO_H

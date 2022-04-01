@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+#include <tlhelp32.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -149,6 +149,52 @@ void MainWindow::on_pushButton_3_clicked()
 
     /*Set the Worker*/
     worker->adhandle=devhandle;
+
+    /*Remerber to move this code block!!!!!!!!!!*/
+    /*Remerber to move this code block!!!!!!!!!!*/
+    /*Remerber to move this code block!!!!!!!!!!*/
+
+    /*Get the host process information*/
+    gethostname(hostname,50);
+    localhost=*gethostbyname(hostname);
+
+    PMIB_TCPTABLE_OWNER_PID pTcpTable(NULL);
+         DWORD dwSize(0);
+         GetExtendedTcpTable(pTcpTable, &dwSize, TRUE,AF_INET,TCP_TABLE_OWNER_PID_ALL,0);
+         pTcpTable = (MIB_TCPTABLE_OWNER_PID *)new char[dwSize];//重新分配缓冲区
+
+         if(GetExtendedTcpTable(pTcpTable,&dwSize,TRUE,AF_INET,TCP_TABLE_OWNER_PID_ALL,0) != NO_ERROR)
+         {
+             printf("no");
+         }
+         int nNum = (int) pTcpTable->dwNumEntries; //TCP连接的数目
+              for(int i=0;i<nNum;i++)
+              {
+
+                      qDebug()<<"local IP: "<<inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwLocalAddr), //本地IP 地址
+                      qDebug()<<"local port: "<<htons(pTcpTable->table[i].dwLocalPort), //本地端口
+                      qDebug()<<"remote ip: "<<inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwRemoteAddr), //远程IP地址
+                      qDebug()<<"remote port: "<<htons(pTcpTable->table[i].dwRemotePort), //远程端口
+                      qDebug()<<"state: "<<pTcpTable->table[i].dwState, //状态
+                      qDebug()<<"PID: "<<pTcpTable->table[i].dwOwningPid; //所属进程PID
+
+              }
+          HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+          PROCESSENTRY32 pe = { sizeof(pe) };
+
+          for (BOOL ret = Process32First(hSnapshot, &pe); ret; ret = Process32Next(hSnapshot, &pe)) {
+              wchar_t * wText = pe.szExeFile;
+              DWORD dwNum = WideCharToMultiByte(CP_OEMCP,NULL,wText,-1,NULL,0,NULL,FALSE);//WideCharToMultiByte的运用
+              char *psText;  // psText为char*的临时数组，作为赋值给std::string的中间变量
+              psText = new char[dwNum];
+              WideCharToMultiByte (CP_OEMCP,NULL,wText,-1,psText,dwNum,NULL,FALSE);//WideCharToMultiByte的再次运用
+              qDebug()<<psText;
+              delete []psText;// psText的清除
+              }
+
+     /*Remerber to move this code block!!!!!!!!!!*/
+
+
     //pcap_setmode(devhandle,MODE_MON);
 
     /*Start the Work*/
@@ -230,7 +276,7 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
     /*Print Data in TestEdit*/
 
         /*print data in hex*/
-        ui->textEdit->append(byteToHex(cresult->pkt_data,cresult->caplen));
+        ui->textEdit->append(byteToHex(cresult->pkt_data,cresult->caplen,true));
 
         /*print data in char*/
         QString str="";
@@ -252,16 +298,46 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
     /*Print Data in TreeWidget*/
     ui->treeWidget->clear();
 
-        /*Print Physic Level Info*/
+        /*Print Physic Layer Info*/
         QString phy_info="Frame: "+QString::number(row+1)+" "+QString::number(cresult->len)+" bytes on wire, "
                 +QString::number(cresult->caplen)+" bytes captured, on interface "+device->description;
         QTreeWidgetItem*pitem=new QTreeWidgetItem(QStringList()<<phy_info);
         ui->treeWidget->addTopLevelItem(pitem);
 
-        /*Print Physic Level Info*/
+        /*Print Link Layer Info*/
         QString d_info=cresult->link_info();
         QTreeWidgetItem*ditem=new QTreeWidgetItem(QStringList()<<d_info);
         ui->treeWidget->addTopLevelItem(ditem);
+
+        /*Print Net Layer Info*/
+        QString *n_info=cresult->net_info();
+        if(n_info!=NULL){
+            QTreeWidgetItem*nitem=new QTreeWidgetItem(QStringList()<<n_info[0]);
+            for(int i=1;n_info[i]!="\0";i++){
+                nitem->addChild(new QTreeWidgetItem(QStringList()<<n_info[i]));
+            }
+            ui->treeWidget->addTopLevelItem(nitem);
+        }
+
+        /*Print Transport Layer Info*/
+        QString *t_info=cresult->trans_info();
+        if(t_info!=NULL){
+            QTreeWidgetItem*titem=new QTreeWidgetItem(QStringList()<<t_info[0]);
+            for(int i=1;t_info[i]!="\0";i++){
+                titem->addChild(new QTreeWidgetItem(QStringList()<<t_info[i]));
+            }
+            ui->treeWidget->addTopLevelItem(titem);
+        }
+
+        /*Print Application Layer Info*/
+        QString *a_info=cresult->app_info();
+        if(a_info!=NULL){
+            QTreeWidgetItem*aitem=new QTreeWidgetItem(QStringList()<<a_info[0]);
+            for(int i=1;a_info[i]!="\0";i++){
+                aitem->addChild(new QTreeWidgetItem(QStringList()<<a_info[i]));
+            }
+            ui->treeWidget->addTopLevelItem(aitem);
+        }
 
 }
 

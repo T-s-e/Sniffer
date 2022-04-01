@@ -42,8 +42,6 @@ private slots:
 
     void on_tableWidget_cellClicked(int row, int column);
 
-    void on_textEdit_2_selectionChanged();
-
 private:
     Ui::MainWindow *ui;
     pcap_if_t *alldevs;
@@ -53,7 +51,8 @@ private:
     pcap_t* devhandle;
     workthread *worker;
     QVector<packet_info*> pkt_list;
-
+    char hostname[50];
+    hostent localhost;
     int packet_num=0;
 };
 

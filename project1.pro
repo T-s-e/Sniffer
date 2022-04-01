@@ -2,7 +2,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11 -lwpcap -lPacket -lWs2_32
+CONFIG += c++11 -lwpcap -lPacket -lWs2_32 -lIphlpapi
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -31,7 +31,7 @@ LIBS +=\
     $$PWD/npcap_sdk/Lib/Packet.lib    \
 
 LIBS += -lWs2_32
-
+LIBS += -lIphlpapi
 
 
 # Default rules for deployment.
