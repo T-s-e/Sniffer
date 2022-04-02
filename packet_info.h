@@ -27,12 +27,15 @@ public:
     QString ser_name;
     QString src;
     QString des;
+    QString src_port="Unkonwn";
+    QString des_port="Unkonwn";
     QString protocol;
     QString descr;
     QString link_protocol;
     QString net_protocol;
     QString trans_protocol;
     QString app_protocol;
+    QString pid="Unkonwn";
 
     packet_info(int len);
     void link_handle(char *raw_data);

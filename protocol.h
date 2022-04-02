@@ -168,6 +168,10 @@ typedef struct dns_answer{
     u_short dataLength;    // 2 byte
     //char* name           // Non-fixed
 }DNS_ANSWER;
+
+
+
+
 #pragma pack ()
 
 #endif // PROTOCOL_H

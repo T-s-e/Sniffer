@@ -14,6 +14,17 @@
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+bool AdjustPrivileges();
+typedef struct process_info{
+    QString local_IP;
+    QString local_port;
+    QString remote_IP;
+    QString remote_port;
+    //QString state;
+    QString PID;
+    QString appname;
+}PROCESS_INFO;
+
 
 class MainWindow : public QMainWindow
 {
@@ -42,6 +53,8 @@ private slots:
 
     void on_tableWidget_cellClicked(int row, int column);
 
+    void on_pushButton_4_clicked();
+
 private:
     Ui::MainWindow *ui;
     pcap_if_t *alldevs;
@@ -51,9 +64,9 @@ private:
     pcap_t* devhandle;
     workthread *worker;
     QVector<packet_info*> pkt_list;
-    char hostname[50];
-    hostent localhost;
+    QVector<process_info*> app_list;
     int packet_num=0;
+
 };
 
 #endif // MAINWINDOW_H

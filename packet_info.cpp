@@ -61,7 +61,12 @@ void packet_info::net_handle(char *raw_data)
             //trans_handle(net_lh+sizeof *ip);
             trans_handle(net_lh+4*(ip->versiosn_head_length & 0x0F));
             }
+    case 2:{                           //arp
 
+            }
+    case 3:{                           //ipv6
+
+            }
 
     default:;
     }
@@ -76,8 +81,11 @@ void packet_info::trans_handle(char *raw_data)
     case 1:{                           //tcp
             TCP_HEADER *tcp;
             tcp=(TCP_HEADER *)raw_data;
+            app_type=0;
             int desport=ntohs(tcp->des_port);
             int srcport=ntohs(tcp->src_port);
+            src_port=QString::number(srcport);
+            des_port=QString::number(desport);
             switch(desport){
             case 80: app_type=1;break;  //http
             case 53: app_type=2;break;  //dns
@@ -88,20 +96,24 @@ void packet_info::trans_handle(char *raw_data)
             case 80: app_type=1;break;  //http
             case 53: app_type=2;break;  //dns
             case 443: app_type=3;break;  //https
-            default: app_type=0;break;
+            default: break;
             }
                        /*do some thing to full decription*/
-            des=des+" : "+QString::number(desport);
-            src=src+" : "+QString::number(srcport);
+            //des=des+" : "+QString::number(desport);
+            //src=src+" : "+QString::number(srcport);
 
-            ser_name=QString();
             trans_protocol="TCP (6)";
             protocol="TCP";
-            descr="tcp";
+            descr=QString::number(ntohs(tcp->src_port))+" -> "+QString::number(ntohs(tcp->des_port));
+            descr=descr+" Flags: 0x"+QString::number(tcp->flags&0x3f,16)+" Len: "+QString::number(tcp->header_length>>4)+" bytes";
             app_handle(trans_lh+sizeof *tcp);
             }
+    case 2:{                           //udp
 
+            }
+    case 3:{                           //icmp
 
+            }
     default:;
     }
     return;
@@ -115,7 +127,7 @@ void packet_info::app_handle(char *raw_data)
 
                        /*do some thing to full decription*/
             protocol="HTTP";
-            descr="http";
+            descr=descr+" http";
             break;
             }
     case 2:{                           //dns
@@ -123,10 +135,16 @@ void packet_info::app_handle(char *raw_data)
             dns=(DNS_HEADER *)raw_data;
                        /*do some thing to full decription*/
             protocol="DNS";
-            descr="dns";
+            descr=descr+" dns";
             break;
             }
+    case 3:{                           //https
 
+                       /*do some thing to full decription*/
+            protocol="HTTPS";
+            descr=descr+" https";
+            break;
+            }
 
     default:;
     }
@@ -187,18 +205,45 @@ QString* packet_info::net_info(){
 QString *packet_info::trans_info(){
 
     /*Get Detail Infomation on Transport Layer*/
-     QString *res=new QString[14];
-     res[0]="nothing";
-     res[1]="\0";
+    switch(trans_type){
+    case 1:{                           //tcp
+            TCP_HEADER *tcp;
+            tcp=(TCP_HEADER *)trans_lh;
+            QString *res=new QString[12];
+            int tcplen=len-14-20-(tcp->header_length>>4)*4;
+            res[0]="Transmission Control Protocol, ";
+            res[0]=res[0]+"Src Port: "+QString::number(ntohs(tcp->src_port))+", Des Port: "+QString::number(ntohs(tcp->des_port));
+            res[0]=res[0]+", Seq: "+QString::number(ntohl(tcp->sequence))+", ACK: "+QString::number(ntohl(tcp->ack))
+                    +", headlen: "+QString::number((tcp->header_length>>4))+" bytes";
+            res[1]="Source Port: "+QString::number(ntohs(tcp->src_port));
+            res[2]="Destination Port: "+QString::number(ntohs(tcp->des_port));
 
+            res[3]="TCP Segment Len: "+QString::number(tcplen)+"bits";
+            res[4]="Sequence Number: "+QString::number(ntohl(tcp->sequence));
+            res[5]="Acknowledgment Number: "+QString::number(ntohl(tcp->ack));
+            res[6]="Header Length: "+QString::number((tcp->header_length>>4))+"bytes";
+            res[7]="Flags: 0x"+QString::number(tcp->flags,16)+" URG: "+QString::number(((tcp->flags) & 0x20) >> 5)
+                    +" ACK: "+QString::number(((tcp->flags) & 0x10) >> 4)+" PSH: "+QString::number(((tcp->flags) & 0x08) >> 3)
+                    +" RST:"+QString::number(((tcp->flags) & 0x04) >> 2)+" SYN: "+QString::number(((tcp->flags) & 0x02) >> 1)
+                    +" FIN: "+QString::number(((tcp->flags) & 0x01));
+            res[8]="Window: "+QString::number(ntohs(tcp->window_size));
+            res[9]="Checksum: "+QString::number(ntohs(tcp->checksum),16);
+            res[10]="Urgent Pointer: "+QString::number(ntohs(tcp->urgent));
+            res[11]="\0";
+            return res;
+            }
+
+
+    default:return NULL;
+    }
 }
 QString *packet_info::app_info(){
 
     /*Get Detail Infomation on Application Layer*/
      QString *res=new QString[14];
      res[0]="nothing";
-     res[1]=ser_name;
-     res[2]="\0";
+     res[1]="\0";
+     return res;
 }
 QString byteToHex(u_char *str, int size, bool pos){
     QString res = "";

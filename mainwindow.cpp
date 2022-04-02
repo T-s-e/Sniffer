@@ -1,15 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <tlhelp32.h>
-
+#include"psapi.h"
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     ui->comboBox->addItem("no card");
-
-
+    on_pushButton_4_clicked();
     /*Creat a Work Thread and Connect Singal*/
     worker = new workthread(this);
     //connect(worker, &workthread::finished, worker, &QObject::deleteLater);
@@ -17,11 +16,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(worker, &workthread::errorinfo, this, &MainWindow::handleError);
 
     /*Set the Table*/
-    ui->tableWidget->setColumnCount(6);
+    ui->tableWidget->setColumnCount(7);
     ui->tableWidget->verticalHeader()->setDefaultSectionSize(30);
-    QStringList title={"Time","Source","Destination","Protocol","Length","Info"};
+    QStringList title={"PID","Time","Source","Destination","Protocol","Length","Info"};
     ui->tableWidget->setHorizontalHeaderLabels(title);
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableWidget->setColumnWidth(0,100);
+    ui->tableWidget->setColumnWidth(1,100);
+    ui->tableWidget->setColumnWidth(2,150);
+    ui->tableWidget->setColumnWidth(3,150);
+    ui->tableWidget->setColumnWidth(4,100);
+    ui->tableWidget->setColumnWidth(5,100);
+    ui->tableWidget->setColumnWidth(6,350);
     ui->tableWidget->setShowGrid(false);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -34,6 +39,9 @@ MainWindow::MainWindow(QWidget *parent)
     /*Set the TreeWidget*/
     ui->treeWidget->setFont(QFont(tr("Consolas"), 12));
     ui->treeWidget->setHeaderHidden(true);
+
+
+
 }
 
 MainWindow::~MainWindow()
@@ -99,6 +107,9 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_pushButton_3_clicked()
 {
+
+
+
     /*Check the Index*/
     int index=ui->comboBox->currentIndex();
     if(index==0)
@@ -117,6 +128,9 @@ void MainWindow::on_pushButton_3_clicked()
         ui->textEdit_2->clear();
         ui->treeWidget->clear();
         packet_num=0;
+        for(int i=0;i<pkt_list.size();i++){
+            free(pkt_list[i]);
+        }
         pkt_list.clear();
         qDebug()<<"pkt_list: "<<pkt_list.size();
     }
@@ -126,6 +140,8 @@ void MainWindow::on_pushButton_3_clicked()
     if(index!=0){
         for(device=alldevs;i++<index-1;device=device->next);
     }
+
+
 
     /*Open the Choosen Device*/
     if((devhandle= pcap_open_live(device->name,	// name of the device
@@ -140,6 +156,8 @@ void MainWindow::on_pushButton_3_clicked()
         return;
     }
 
+
+
     /*Check the Datalink*/
     if(pcap_datalink(devhandle) != DLT_EN10MB)
     {
@@ -150,49 +168,7 @@ void MainWindow::on_pushButton_3_clicked()
     /*Set the Worker*/
     worker->adhandle=devhandle;
 
-    /*Remerber to move this code block!!!!!!!!!!*/
-    /*Remerber to move this code block!!!!!!!!!!*/
-    /*Remerber to move this code block!!!!!!!!!!*/
 
-    /*Get the host process information*/
-    gethostname(hostname,50);
-    localhost=*gethostbyname(hostname);
-
-    PMIB_TCPTABLE_OWNER_PID pTcpTable(NULL);
-         DWORD dwSize(0);
-         GetExtendedTcpTable(pTcpTable, &dwSize, TRUE,AF_INET,TCP_TABLE_OWNER_PID_ALL,0);
-         pTcpTable = (MIB_TCPTABLE_OWNER_PID *)new char[dwSize];//重新分配缓冲区
-
-         if(GetExtendedTcpTable(pTcpTable,&dwSize,TRUE,AF_INET,TCP_TABLE_OWNER_PID_ALL,0) != NO_ERROR)
-         {
-             printf("no");
-         }
-         int nNum = (int) pTcpTable->dwNumEntries; //TCP连接的数目
-              for(int i=0;i<nNum;i++)
-              {
-
-                      qDebug()<<"local IP: "<<inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwLocalAddr), //本地IP 地址
-                      qDebug()<<"local port: "<<htons(pTcpTable->table[i].dwLocalPort), //本地端口
-                      qDebug()<<"remote ip: "<<inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwRemoteAddr), //远程IP地址
-                      qDebug()<<"remote port: "<<htons(pTcpTable->table[i].dwRemotePort), //远程端口
-                      qDebug()<<"state: "<<pTcpTable->table[i].dwState, //状态
-                      qDebug()<<"PID: "<<pTcpTable->table[i].dwOwningPid; //所属进程PID
-
-              }
-          HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-          PROCESSENTRY32 pe = { sizeof(pe) };
-
-          for (BOOL ret = Process32First(hSnapshot, &pe); ret; ret = Process32Next(hSnapshot, &pe)) {
-              wchar_t * wText = pe.szExeFile;
-              DWORD dwNum = WideCharToMultiByte(CP_OEMCP,NULL,wText,-1,NULL,0,NULL,FALSE);//WideCharToMultiByte的运用
-              char *psText;  // psText为char*的临时数组，作为赋值给std::string的中间变量
-              psText = new char[dwNum];
-              WideCharToMultiByte (CP_OEMCP,NULL,wText,-1,psText,dwNum,NULL,FALSE);//WideCharToMultiByte的再次运用
-              qDebug()<<psText;
-              delete []psText;// psText的清除
-              }
-
-     /*Remerber to move this code block!!!!!!!!!!*/
 
 
     //pcap_setmode(devhandle,MODE_MON);
@@ -236,14 +212,24 @@ void MainWindow::handleResults(packet_info* result){
         color = QColor(255,218,185);
     }
     ui->tableWidget->insertRow(packet_num);
-    ui->tableWidget->setItem(packet_num,0,new QTableWidgetItem(result->timestr));
-    ui->tableWidget->setItem(packet_num,1,new QTableWidgetItem(result->src));
-    ui->tableWidget->setItem(packet_num,2,new QTableWidgetItem(result->des));
-    ui->tableWidget->setItem(packet_num,3,new QTableWidgetItem(result->protocol));
-    ui->tableWidget->setItem(packet_num,4,new QTableWidgetItem(QString::number(result->len)));
-    ui->tableWidget->setItem(packet_num,5,new QTableWidgetItem(result->descr));
-    ui->lineEdit->setText(QString::number(packet_num));
-    for(int i = 0;i < 6;i++){
+    QString app_ipPort;
+    result->pid="System";
+    for(int i=0;i<app_list.size();i++){
+        app_ipPort=app_list[i]->local_IP+app_list[i]->local_port;
+        if(app_ipPort==result->src+result->src_port||app_ipPort==result->des+result->des_port){
+            result->pid=app_list[i]->PID;
+        }
+
+
+    }
+    ui->tableWidget->setItem(packet_num,0,new QTableWidgetItem(result->pid));
+    ui->tableWidget->setItem(packet_num,1,new QTableWidgetItem(result->timestr));
+    ui->tableWidget->setItem(packet_num,2,new QTableWidgetItem(result->src));
+    ui->tableWidget->setItem(packet_num,3,new QTableWidgetItem(result->des));
+    ui->tableWidget->setItem(packet_num,4,new QTableWidgetItem(result->protocol));
+    ui->tableWidget->setItem(packet_num,5,new QTableWidgetItem(QString::number(result->len)));
+    ui->tableWidget->setItem(packet_num,6,new QTableWidgetItem(result->descr));
+    for(int i = 0;i < 7;i++){
         ui->tableWidget->item(packet_num,i)->setBackground(color);
     }
     packet_num++;
@@ -343,3 +329,95 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
 
 
 
+
+void MainWindow::on_pushButton_4_clicked()
+{
+
+    /*改成定时器触发，不然太不稳定了QTimer::singleShot(1000,this, &A::function());*/
+    /*来一个包触发一次？*/
+    /*Clear the process list and free the memory*/
+    for(int i=0;i<app_list.size();i++){
+        free(app_list[i]);
+    }
+    app_list.clear();
+
+    /*Get the Higher Privileges to look up other process*/
+    AdjustPrivileges();
+
+    /*Get the list of tcp link*/
+    PMIB_TCPTABLE_OWNER_PID pTcpTable(NULL);
+    DWORD dwSize(0);
+    GetExtendedTcpTable(pTcpTable, &dwSize, TRUE,AF_INET,TCP_TABLE_OWNER_PID_ALL,0);
+    pTcpTable = (MIB_TCPTABLE_OWNER_PID *)new char[dwSize];//重新分配缓冲区
+    if(GetExtendedTcpTable(pTcpTable,&dwSize,TRUE,AF_INET,TCP_TABLE_OWNER_PID_ALL,0) != NO_ERROR)
+    {
+        printf("error");
+    }
+
+    int nNum = (int) pTcpTable->dwNumEntries; //TCP连接的数目
+
+    /*Get Process Name According to Pid*/
+    HANDLE processHandle;
+    char tempProcName[MAX_PATH] = { 0 };
+    for(int i=0;i<nNum;i++)
+    {
+        processHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pTcpTable->table[i].dwOwningPid);
+        if(processHandle==NULL){     //system process
+            continue;
+        }
+        if(pTcpTable->table[i].dwLocalAddr==16777343||pTcpTable->table[i].dwLocalAddr==0)   //127.0.0.1 & 0.0.0.0
+            continue;
+
+        GetModuleFileNameExA(processHandle, NULL, tempProcName, MAX_PATH);
+
+
+        /*Fill the information and join it into the app_list*/
+        process_info *temp=new process_info;
+        temp->PID=QString::number(pTcpTable->table[i].dwOwningPid);
+        GetModuleFileNameExA(processHandle, NULL, tempProcName, MAX_PATH);
+        temp->appname=tempProcName;
+
+        temp->local_port=QString::number(htons(pTcpTable->table[i].dwLocalPort));
+        temp->remote_port=QString::number(htons(pTcpTable->table[i].dwRemotePort));
+        temp->local_IP=QString(inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwLocalAddr));
+        temp->remote_IP=QString(inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwRemoteAddr));
+        app_list.push_back(temp);
+        qDebug()<<temp->appname;
+        qDebug()<<temp->PID;
+        qDebug()<<temp->local_port;
+         }
+
+
+
+
+
+
+}
+bool AdjustPrivileges() {
+    HANDLE hToken;
+    TOKEN_PRIVILEGES tp;
+    TOKEN_PRIVILEGES oldtp;
+    DWORD dwSize=sizeof(TOKEN_PRIVILEGES);
+    LUID luid;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+        if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED) return true;
+        else return false;
+    }
+    if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
+        CloseHandle(hToken);
+        return false;
+    }
+    ZeroMemory(&tp, sizeof(tp));
+    tp.PrivilegeCount=1;
+    tp.Privileges[0].Luid=luid;
+    tp.Privileges[0].Attributes=SE_PRIVILEGE_ENABLED;
+    /* Adjust Token Privileges */
+    if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), &oldtp, &dwSize)) {
+        CloseHandle(hToken);
+        return false;
+    }
+    // close handles
+    CloseHandle(hToken);
+    return true;
+}
