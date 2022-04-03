@@ -45,6 +45,32 @@ typedef struct ip_header{           // 20 byte
     u_int src_addr;                 // source address [4 byte]
     u_int des_addr;                 // destination address [4 byte]
 }IP_HEADER;
+// Ipv6 header
+/*
++-------+--------------+--------------------------------------+
+| 4 bit |     8 bit    |                20 bit                |
++-------+--------------+--------------------------------------+
+|version|traffic class |             flow lable               |
++-------------------+--+---+---+----+-+-+-+-------------------+
+|          payload length     |  next header  |  hop limit    |
++-------------------+---------------+-------------------------+
+|                   source ip address 16 bytes                |
++-------------------------------------------------------------+
+|                 destination ip address   16 bytes           |
++-------------------------------------------------------------+
+*/
+typedef struct ipv6_header{         // 40 byte
+    u_int ver_tr_flow;         //4+8+20 bit=4 byte
+    u_short pay_load;             //2 payload length byte
+    u_char next_header;           //1 byte next header
+    u_char hop_limit;            //1 byte hop_limit
+    u_char src_addr[16];          // source address [16 byte]
+    u_char des_addr[16];           // destination address [16 byte]
+}IPV6_HEADER;
+
+
+
+
 // Tcp header
 /*
 +----------------------+---------------------+
@@ -127,47 +153,12 @@ typedef struct arp_header{   // 28 byte
     u_short op_code;         // operation code [2 byte]
 
     u_char src_eth_addr[6];  // source ether address [6 byte]
-    u_char src_ip_addr[4];   // source ip address [4 byte]
+    u_int src_ip_addr;   // source ip address [4 byte]
     u_char des_eth_addr[6];  // destination ether address [6 byte]
-    u_char des_ip_addr[4];   // destination ip address [4 byte]
+    u_int des_ip_addr;   // destination ip address [4 byte]
 
 }ARP_HEADER;
-// dns
-/*
-+--------------------------+---------------------------+
-|           16 bit         |1b|4bit|1b|1b|1b|1b|3b|4bit|
-+--------------------------+--+----+--+--+--+--+--+----+
-|      identification      |QR| OP |AA|TC|RD|RA|..|Resp|
-+--------------------------+--+----+--+--+--+--+--+----+
-|         Question         |       Answer RRs          |
-+--------------------------+---------------------------+
-|     Authority RRs        |      Additional RRs       |
-+--------------------------+---------------------------+
-*/
-typedef struct dns_header{  // 12 byte
-    u_short identification; // Identification [2 byte]
-    u_short flags;          // Flags [total 2 byte]
-    u_short question;       // Question Number [2 byte]
-    u_short answer;         // Answer RRs [2 byte]
-    u_short authority;      // Authority RRs [2 byte]
-    u_short additional;     // Additional RRs [2 byte]
-}DNS_HEADER;
 
-// dns question
-typedef struct dns_question{
-    // char* name;          // Non-fixed
-    u_short query_type;     // 2 byte
-    u_short query_class;    // 2 byte
-}DNS_QUESITON;
-
-typedef struct dns_answer{
-    // char* name          // Non-fixed
-    u_short answer_type;   // 2 byte
-    u_short answer_class;  // 2 byte
-    u_int TTL;             // 4 byte
-    u_short dataLength;    // 2 byte
-    //char* name           // Non-fixed
-}DNS_ANSWER;
 
 
 

@@ -8,6 +8,7 @@
 QString byteToHex(u_char *str, int size,bool pos);
 QString macbyteToHex(u_char *str, int size);
 QString getip(u_int addr);
+QString getipv6(u_char* addr);
 class packet_info
 {
 public:
@@ -15,8 +16,8 @@ public:
     u_char* pkt_data;
     int caplen;
     int len;
-    char* link_lh=NULL;
-    int link_type=0;
+    char* link_lh=NULL;       //datalink protocol header
+    int link_type=0;            //0 means invalid or None
     char* net_lh=NULL;
     int net_type=0;
     char* trans_lh=NULL;
@@ -24,13 +25,12 @@ public:
     char* app_lh=NULL;
     int app_type=0;
 
-    QString ser_name;
     QString src;
     QString des;
     QString src_port="Unkonwn";
     QString des_port="Unkonwn";
     QString protocol;
-    QString descr;
+    QString descr;            //future info in the table
     QString link_protocol;
     QString net_protocol;
     QString trans_protocol;

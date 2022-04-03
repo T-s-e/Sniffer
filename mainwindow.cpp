@@ -2,13 +2,19 @@
 #include "ui_mainwindow.h"
 #include <tlhelp32.h>
 #include"psapi.h"
+#include <QTimer>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     ui->comboBox->addItem("no card");
-    on_pushButton_4_clicked();
+    /*Get the Higher Privileges to look up other process*/
+    AdjustPrivileges();
+    refresh_applist();
+    QTimer::singleShot(100,this, &MainWindow::refresh_control);
+
+
     /*Creat a Work Thread and Connect Singal*/
     worker = new workthread(this);
     //connect(worker, &workthread::finished, worker, &QObject::deleteLater);
@@ -58,7 +64,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-
+                        /*Get Decice List*/
 
     pcap_if_t *d;
 
@@ -80,7 +86,7 @@ void MainWindow::on_pushButton_clicked()
 
         }
 
-
+    return;
 
 }
 
@@ -92,6 +98,7 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
+                        /*Stop the Work Temporarily*/
 
     /*Check the Work*/
    if(working==false)
@@ -103,11 +110,12 @@ void MainWindow::on_pushButton_2_clicked()
     pcap_close(devhandle);
     working=false;
     statusBar()->showMessage("stop");
+    return;
 }
 
 void MainWindow::on_pushButton_3_clicked()
 {
-
+                            /*Start the Capture*/
 
 
     /*Check the Index*/
@@ -124,6 +132,8 @@ void MainWindow::on_pushButton_3_clicked()
         /*clear last output*/
         ui->tableWidget->clearContents();
         ui->tableWidget->setRowCount(0);
+        t_list.clear();
+        t_num=0;
         ui->textEdit->clear();
         ui->textEdit_2->clear();
         ui->treeWidget->clear();
@@ -141,8 +151,6 @@ void MainWindow::on_pushButton_3_clicked()
         for(device=alldevs;i++<index-1;device=device->next);
     }
 
-
-
     /*Open the Choosen Device*/
     if((devhandle= pcap_open_live(device->name,	// name of the device
                                      65536,			// portion of the packet to capture.
@@ -156,8 +164,6 @@ void MainWindow::on_pushButton_3_clicked()
         return;
     }
 
-
-
     /*Check the Datalink*/
     if(pcap_datalink(devhandle) != DLT_EN10MB)
     {
@@ -168,33 +174,72 @@ void MainWindow::on_pushButton_3_clicked()
     /*Set the Worker*/
     worker->adhandle=devhandle;
 
-
-
-
-    //pcap_setmode(devhandle,MODE_MON);
-
     /*Start the Work*/
     worker->control=true;
     worker->start();
     working=true;
 
     /*Show some Message*/
-    printf("\nlistening on %s...\n", device->description);
-    fflush(stdout);
-    statusBar()->showMessage(device->description);
+    QString status12="listening on ";
+    status12.append(device->description);
+    statusBar()->showMessage(status12);
     return;
 
 }
 
 void MainWindow::handleResults(packet_info* result){
+        /*Handle the Captured Pcaket*/
 
-    /*Join the Packet to the Vector*/
+    /*Join the Packet to the Packet List*/
     pkt_list.push_back(result);
+    packet_num++;
+    ui->lcdNumber->display(packet_num);
 
-    /*Print Debug Info*/
-    qDebug()<<"pkt_list: "<<pkt_list.size()<<result->timestr<<"len:"<<result->caplen<<"src:"<<result->src<<"des:"<<result->des<<"protocol:"<<result->protocol<<result->descr;
+    /*Fill the Pid Info*/
+    QString app_ipPort;
+    if(result->protocol=="HTTP"||result->protocol=="HTTPS")
+        refresh_control();
+    refresh_applist();
+    result->pid="System";
+    for(int i=0;i<app_list.size();i++){
+        app_ipPort=app_list[i]->local_IP+app_list[i]->local_port;
+        if(app_ipPort==result->src+result->src_port||app_ipPort==result->des+result->des_port){
+            result->pid=app_list[i]->PID;
+            break;
+        }
+    }
+
+
+    /*Check the Packet Accoring to Filter*/
+    switch (filter_type) {
+        case 0:{                  //pid 1
+                if(result->pid!=filter_value)
+                return;
+                break;}
+        case 2:{                    //src 2
+                if(result->src!=filter_value)
+                return;
+                break;}
+        case 3:{                    //des 3
+                if(result->des!=filter_value)
+                return;
+                break;}
+        case 4:{                    //protocol 4
+                if(result->protocol!=filter_value)
+                return;
+                break;}
+
+        case 6:{                        //port 5
+                if(((result->src_port+"-"+result->des_port)!=filter_value)&((result->des_port+"-"+result->src_port)!=filter_value))
+                return;
+                break;}
+    default:{break;}
+    }
+
 
     /*Print Data in Table*/
+
+    /*Set the Color According to Protocol*/
     QColor color;
     if(result->protocol == "TCP"){
         color = QColor(216,191,216);
@@ -206,36 +251,39 @@ void MainWindow::handleResults(packet_info* result){
     }
     else if(result->protocol == "DNS"){
         color = QColor(255,255,224);
+    }else if(result->protocol == "UDP"){
+        color = QColor(210,149,10);
+    }else if(result->protocol == "ARP"){
+        color = QColor(210,19,210);
+    }else if(result->protocol == "SSDP"){
+        color = QColor(20,149,210);
     }else if(result->protocol == "HTTPS"){
         color = QColor(210,149,210);
     }else{
-        color = QColor(255,218,185);
+        color = QColor(0,218,185);
     }
-    ui->tableWidget->insertRow(packet_num);
-    QString app_ipPort;
-    result->pid="System";
-    for(int i=0;i<app_list.size();i++){
-        app_ipPort=app_list[i]->local_IP+app_list[i]->local_port;
-        if(app_ipPort==result->src+result->src_port||app_ipPort==result->des+result->des_port){
-            result->pid=app_list[i]->PID;
-        }
 
-
-    }
-    ui->tableWidget->setItem(packet_num,0,new QTableWidgetItem(result->pid));
-    ui->tableWidget->setItem(packet_num,1,new QTableWidgetItem(result->timestr));
-    ui->tableWidget->setItem(packet_num,2,new QTableWidgetItem(result->src));
-    ui->tableWidget->setItem(packet_num,3,new QTableWidgetItem(result->des));
-    ui->tableWidget->setItem(packet_num,4,new QTableWidgetItem(result->protocol));
-    ui->tableWidget->setItem(packet_num,5,new QTableWidgetItem(QString::number(result->len)));
-    ui->tableWidget->setItem(packet_num,6,new QTableWidgetItem(result->descr));
+    /*Insert Packet Information to Table*/
+    ui->tableWidget->insertRow(t_num);
+    ui->tableWidget->setItem(t_num,0,new QTableWidgetItem(result->pid));
+    ui->tableWidget->setItem(t_num,1,new QTableWidgetItem(result->timestr));
+    ui->tableWidget->setItem(t_num,2,new QTableWidgetItem(result->src));
+    ui->tableWidget->setItem(t_num,3,new QTableWidgetItem(result->des));
+    ui->tableWidget->setItem(t_num,4,new QTableWidgetItem(result->protocol));
+    ui->tableWidget->setItem(t_num,5,new QTableWidgetItem(QString::number(result->len)));
+    ui->tableWidget->setItem(t_num,6,new QTableWidgetItem(result->descr));
     for(int i = 0;i < 7;i++){
-        ui->tableWidget->item(packet_num,i)->setBackground(color);
+        ui->tableWidget->item(t_num,i)->setBackground(color);
     }
-    packet_num++;
+
+    /*Add Packet to Table_list*/
+    t_list.push_back(result);
+    t_num++;
     return;
 }
 void MainWindow::handleError(char* result){
+
+    /*Handle Error and Stop the Work*/
     statusBar()->showMessage(result);
 
     /*Check the Work*/
@@ -247,24 +295,26 @@ void MainWindow::handleError(char* result){
     worker->wait();
     pcap_close(devhandle);
     working=false;
+    return;
 }
 
 
 
 void MainWindow::on_tableWidget_cellClicked(int row, int column)
 {
+    /*Show Detail Information of the Clicked Packet in TreeWidget and TextEdit*/
 
-    /*get the clicked packet*/
-    packet_info *cresult=pkt_list[row];
+    /*Get the Clicked Packet*/
+    packet_info *cresult=t_list[row];
     ui->textEdit->clear();
     ui->textEdit_2->clear();
 
-    /*Print Data in TestEdit*/
+    /*Print Data in TextEdit*/
 
-        /*print data in hex*/
+        /*Print Data in Hex*/
         ui->textEdit->append(byteToHex(cresult->pkt_data,cresult->caplen,true));
 
-        /*print data in char*/
+        /*Print Data in Char*/
         QString str="";
         char temp[cresult->caplen];
         memcpy_s(temp,cresult->caplen,cresult->pkt_data,cresult->caplen);
@@ -303,6 +353,7 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
                 nitem->addChild(new QTreeWidgetItem(QStringList()<<n_info[i]));
             }
             ui->treeWidget->addTopLevelItem(nitem);
+            //free(n_info);
         }
 
         /*Print Transport Layer Info*/
@@ -313,10 +364,23 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
                 titem->addChild(new QTreeWidgetItem(QStringList()<<t_info[i]));
             }
             ui->treeWidget->addTopLevelItem(titem);
+            //free(t_info);
         }
 
-        /*Print Application Layer Info*/
+        /*Print Application Layer Info (Only the Process Name)*/
         QString *a_info=cresult->app_info();
+        if(cresult->pid!="System")
+        {
+            for(int i=0;i<app_list.size();i++){
+                if(cresult->pid==app_list[i]->PID){
+                    a_info[0].append(app_list[i]->appname);
+                    break;
+                }
+            }
+        }
+
+
+
         if(a_info!=NULL){
             QTreeWidgetItem*aitem=new QTreeWidgetItem(QStringList()<<a_info[0]);
             for(int i=1;a_info[i]!="\0";i++){
@@ -324,7 +388,8 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
             }
             ui->treeWidget->addTopLevelItem(aitem);
         }
-
+        //free(a_info);     //Error Here!!!!!!!
+        return;
 }
 
 
@@ -332,19 +397,40 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
 
 void MainWindow::on_pushButton_4_clicked()
 {
+    /*Reset the Filter and Refresh Table*/
+    if(filter_type!=1)
+        {
+          filter_type=1;
+          filter_packet();
+        }
+       return;
 
-    /*改成定时器触发，不然太不稳定了QTimer::singleShot(1000,this, &A::function());*/
-    /*来一个包触发一次？*/
-    /*Clear the process list and free the memory*/
+}
+void MainWindow::refresh_control(){
+    /*Wake Refresh Function Up*/
+    refresh_con=10;
+    return;
+
+}
+
+void MainWindow::refresh_applist(){
+    /*Refresh the Process List According to Falg*/
+
+    /*Execute Onece and Sleep For a While*/
+    if(refresh_con==0){
+        return;
+    }
+    refresh_con--;
+
+    /*Clear the Process List and Free the Memory*/
     for(int i=0;i<app_list.size();i++){
         free(app_list[i]);
     }
     app_list.clear();
 
-    /*Get the Higher Privileges to look up other process*/
-    AdjustPrivileges();
 
-    /*Get the list of tcp link*/
+
+    /*Get the List of TCP Link*/
     PMIB_TCPTABLE_OWNER_PID pTcpTable(NULL);
     DWORD dwSize(0);
     GetExtendedTcpTable(pTcpTable, &dwSize, TRUE,AF_INET,TCP_TABLE_OWNER_PID_ALL,0);
@@ -371,7 +457,7 @@ void MainWindow::on_pushButton_4_clicked()
         GetModuleFileNameExA(processHandle, NULL, tempProcName, MAX_PATH);
 
 
-        /*Fill the information and join it into the app_list*/
+        /*Fill the Information and Join it into the App_list*/
         process_info *temp=new process_info;
         temp->PID=QString::number(pTcpTable->table[i].dwOwningPid);
         GetModuleFileNameExA(processHandle, NULL, tempProcName, MAX_PATH);
@@ -382,18 +468,12 @@ void MainWindow::on_pushButton_4_clicked()
         temp->local_IP=QString(inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwLocalAddr));
         temp->remote_IP=QString(inet_ntoa(*(in_addr*)& pTcpTable->table[i].dwRemoteAddr));
         app_list.push_back(temp);
-        qDebug()<<temp->appname;
-        qDebug()<<temp->PID;
-        qDebug()<<temp->local_port;
          }
-
-
-
-
-
-
+        return;
 }
+
 bool AdjustPrivileges() {
+    /*Get Higher Privilege to Get Pid*/
     HANDLE hToken;
     TOKEN_PRIVILEGES tp;
     TOKEN_PRIVILEGES oldtp;
@@ -421,3 +501,139 @@ bool AdjustPrivileges() {
     CloseHandle(hToken);
     return true;
 }
+
+void MainWindow::on_tableWidget_cellDoubleClicked(int row, int column)
+{
+    /*Set the Filter According to Clicked cell and refresh Table */
+
+    /*Get the Packet*/
+    packet_info *cresult=t_list[row];
+
+    /*Set Filter Value According to Clicked Cell*/
+    /*"PID","Time","Source","Destination","Protocol","Length","Info"*/
+    switch (column) {
+        case 0:{                  //pid 1
+                if(cresult->pid=="System")
+                    break;
+                filter_value=cresult->pid;
+                filter_type=column;
+                filter_packet();
+                break;}
+        case 2:{                    //src 2
+               filter_value=cresult->src;
+               filter_type=column;
+               filter_packet();
+                break;}
+        case 3:{                    //des 3
+                filter_value=cresult->des;
+               filter_type=column;
+               filter_packet();
+                break;}
+        case 4:{                    //protocol 4
+                filter_value=cresult->protocol;
+               filter_type=column;
+               filter_packet();
+                break;}
+
+        case 6:{                        //port 5
+                if(cresult->trans_type==1||cresult->trans_type==2)     //tcp or udp
+                    {
+                    filter_value=cresult->src_port+"-"+cresult->des_port;
+                    filter_type=column;
+                    filter_packet();
+                    }
+                break;}
+    default: break;
+    }
+    return;
+}
+void MainWindow::filter_packet(){
+
+    /* Refresh Table According to Filter */
+
+    /*Refresh table*/
+    ui->tableWidget->clearContents();
+    ui->tableWidget->setRowCount(0);
+    t_list.clear();
+    t_num=0;
+    ui->textEdit->clear();
+    ui->textEdit_2->clear();
+    ui->treeWidget->clear();
+
+    /*Search All Captured Packet According to Filter*/
+    for(int i=0;i<pkt_list.size();i++){
+        packet_info* result=pkt_list[i];
+
+        /*Compare the Filer Value with Packet Value*/
+        switch (filter_type) {
+            case 0:{                  //pid 1
+                    if(result->pid!=filter_value)
+                    continue;
+                    break;}
+            case 2:{                    //src 2
+                    if(result->src!=filter_value)
+                    continue;
+                    break;}
+            case 3:{                    //des 3
+                    if(result->des!=filter_value)
+                    continue;
+                    break;}
+            case 4:{                    //protocol 4
+                    if(result->protocol!=filter_value)
+                    continue;
+                    break;}
+
+            case 6:{                        //port 5
+                    if(((result->src_port+"-"+result->des_port)!=filter_value)&((result->des_port+"-"+result->src_port)!=filter_value))
+                    continue;
+                    break;}
+        default:{break;}
+        }
+
+        /*Show Packet in the Table*/
+
+        /*Set Color Accoring to Protocol*/
+        QColor color;
+        if(result->protocol == "TCP"){
+            color = QColor(216,191,216);
+        }else if(result->protocol == "IP"){
+            color = QColor(144,238,144);
+        }
+        else if(result->protocol == "HTTP"){
+            color = QColor(238,238,0);
+        }
+        else if(result->protocol == "DNS"){
+            color = QColor(255,255,224);
+        }else if(result->protocol == "UDP"){
+            color = QColor(210,149,10);
+        }else if(result->protocol == "ARP"){
+            color = QColor(210,19,210);
+        }else if(result->protocol == "SSDP"){
+            color = QColor(20,149,210);
+        }else if(result->protocol == "HTTPS"){
+            color = QColor(210,149,210);
+        }else{
+            color = QColor(0,218,185);
+        }
+
+        /*Insert Packet Information to Table*/
+        ui->tableWidget->insertRow(t_num);
+        ui->tableWidget->setItem(t_num,0,new QTableWidgetItem(result->pid));
+        ui->tableWidget->setItem(t_num,1,new QTableWidgetItem(result->timestr));
+        ui->tableWidget->setItem(t_num,2,new QTableWidgetItem(result->src));
+        ui->tableWidget->setItem(t_num,3,new QTableWidgetItem(result->des));
+        ui->tableWidget->setItem(t_num,4,new QTableWidgetItem(result->protocol));
+        ui->tableWidget->setItem(t_num,5,new QTableWidgetItem(QString::number(result->len)));
+        ui->tableWidget->setItem(t_num,6,new QTableWidgetItem(result->descr));
+        for(int j = 0;j < 7;j++){
+            ui->tableWidget->item(t_num,j)->setBackground(color);
+        }
+
+        /*Add Packet to Table_list*/
+        t_list.push_back(result);
+        t_num++;
+        }
+
+    return;
+}
+

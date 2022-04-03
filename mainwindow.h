@@ -55,18 +55,27 @@ private slots:
 
     void on_pushButton_4_clicked();
 
+    void refresh_applist();
+    void refresh_control();
+
+    void on_tableWidget_cellDoubleClicked(int row, int column);
+    void filter_packet();
 private:
     Ui::MainWindow *ui;
-    pcap_if_t *alldevs;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_if_t *device;
-    bool working=false;
-    pcap_t* devhandle;
-    workthread *worker;
-    QVector<packet_info*> pkt_list;
-    QVector<process_info*> app_list;
-    int packet_num=0;
-
+    pcap_if_t *alldevs;             //device list
+    char errbuf[PCAP_ERRBUF_SIZE];    //error info
+    pcap_if_t *device;                 //choosen device
+    bool working=false;                //worker thread control flag
+    pcap_t* devhandle;                  //device handle for capture
+    workthread *worker;                 //capture thread
+    QVector<packet_info*> pkt_list;         //packet list
+    QVector<packet_info*> t_list;           //table list
+    QVector<process_info*> app_list;            //Process list
+    int packet_num=0;                       //captured packet num
+    int t_num=0;                            //table item num
+    int refresh_con=10;                  //control refresh prcocess list
+    int filter_type=1;                      //filter type,0 means invalid
+    QString filter_value;                       //filter value
 };
 
 #endif // MAINWINDOW_H
