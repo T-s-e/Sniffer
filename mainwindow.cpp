@@ -144,7 +144,6 @@ void MainWindow::on_pushButton_3_clicked()
             free(pkt_list[i]);
         }
         pkt_list.clear();
-        qDebug()<<"pkt_list: "<<pkt_list.size();
     }
 
     /*Get the Choosen Device*/
@@ -199,8 +198,6 @@ void MainWindow::handleResults(packet_info* result){
 
     /*Fill the Pid Info*/
     QString app_ipPort;
-    if(result->protocol=="HTTP"||result->protocol=="HTTPS")
-        refresh_applist();
     refresh_applist();
     result->pid="System";
     for(int i=0;i<app_list.size();i++){
