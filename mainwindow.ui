@@ -23,32 +23,85 @@
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QPushButton" name="pushButton">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
              <string>扫描网卡</string>
+            </property>
+            <property name="icon">
+             <iconset resource="src.qrc">
+              <normaloff>:/scan.png</normaloff>:/scan.png</iconset>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_2">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
              <string>暂停抓包</string>
+            </property>
+            <property name="icon">
+             <iconset resource="src.qrc">
+              <normaloff>:/stop.png</normaloff>:/stop.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>30</width>
+              <height>20</height>
+             </size>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_3">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
              <string>开始抓包</string>
+            </property>
+            <property name="icon">
+             <iconset resource="src.qrc">
+              <normaloff>:/start.png</normaloff>:/start.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>30</width>
+              <height>20</height>
+             </size>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLCDNumber" name="lcdNumber"/>
+           <widget class="QLCDNumber" name="lcdNumber">
+            <property name="smallDecimalPoint">
+             <bool>false</bool>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_4">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
              <string>重置过滤</string>
+            </property>
+            <property name="icon">
+             <iconset resource="src.qrc">
+              <normaloff>:/reset.png</normaloff>:/reset.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>30</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="flat">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -63,13 +116,20 @@
            <height>0</height>
           </size>
          </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QWidget" name="widget_2" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QTableWidget" name="tableWidget"/>
+           <widget class="QTableWidget" name="tableWidget">
+            <property name="cursor" stdset="0">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QTreeWidget" name="treeWidget">
@@ -114,15 +174,7 @@
      <string>project</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menu_2">
-    <property name="title">
-     <string>run</string>
-    </property>
-    <addaction name="actionrun_and_stop"/>
-    <addaction name="actionclear"/>
-   </widget>
    <addaction name="menu"/>
-   <addaction name="menu_2"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionrun_and_stop">
@@ -136,7 +188,7 @@
   </action>
   <action name="actionclear">
    <property name="icon">
-    <iconset resource="src.qrc">
+    <iconset>
      <normaloff>:/empty.png</normaloff>:/empty.png</iconset>
    </property>
    <property name="text">

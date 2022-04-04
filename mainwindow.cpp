@@ -33,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setColumnWidth(4,100);
     ui->tableWidget->setColumnWidth(5,100);
     ui->tableWidget->setColumnWidth(6,350);
+    //ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tableWidget->setShowGrid(false);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -138,6 +139,7 @@ void MainWindow::on_pushButton_3_clicked()
         ui->textEdit_2->clear();
         ui->treeWidget->clear();
         packet_num=0;
+        ui->lcdNumber->display(packet_num);
         for(int i=0;i<pkt_list.size();i++){
             free(pkt_list[i]);
         }
@@ -198,7 +200,7 @@ void MainWindow::handleResults(packet_info* result){
     /*Fill the Pid Info*/
     QString app_ipPort;
     if(result->protocol=="HTTP"||result->protocol=="HTTPS")
-        refresh_control();
+        refresh_applist();
     refresh_applist();
     result->pid="System";
     for(int i=0;i<app_list.size();i++){

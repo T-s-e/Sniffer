@@ -32,7 +32,7 @@ LIBS +=\
 
 LIBS += -lWs2_32
 LIBS += -lIphlpapi
-
+RC_ICONS=mmy.ico
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
