@@ -10,7 +10,6 @@
 #include"QVector"
 #include "qstring.h"
 #include"packet_info.h"
-#include"protocol.h"
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -38,31 +37,23 @@ public:
 
 private slots:
     void on_pushButton_clicked();
-
-
-
     void on_pushButton_2_clicked();
-
     void on_pushButton_3_clicked();
-
+    void on_pushButton_4_clicked();
 
     void handleResults(packet_info* result);
     void handleError(char* results);
 
-
-
     void on_tableWidget_cellClicked(int row, int column);
-
-    void on_pushButton_4_clicked();
+    void on_tableWidget_cellDoubleClicked(int row, int column);
 
     void refresh_applist();
     void refresh_control();
 
-    void on_tableWidget_cellDoubleClicked(int row, int column);
     void filter_packet();
 private:
     Ui::MainWindow *ui;
-    pcap_if_t *alldevs;             //device list
+    pcap_if_t *alldevs;             //设备列表
     char errbuf[PCAP_ERRBUF_SIZE];    //error info
     pcap_if_t *device;                 //choosen device
     bool working=false;                //worker thread control flag

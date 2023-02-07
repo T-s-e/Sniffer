@@ -9,22 +9,22 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->comboBox->addItem("no card");
-    /*Get the Higher Privileges to look up other process*/
+    /* 获得查看其它process的权限 */
     AdjustPrivileges();
+    /*  */
     refresh_applist();
     QTimer::singleShot(100,this, &MainWindow::refresh_control);
 
 
-    /*Creat a Work Thread and Connect Singal*/
+    /* 创建一个workthread线程，并connect*/
     worker = new workthread(this);
-    //connect(worker, &workthread::finished, worker, &QObject::deleteLater);
     connect(worker, &workthread::pacinfo, this, &MainWindow::handleResults);
     connect(worker, &workthread::errorinfo, this, &MainWindow::handleError);
 
-    /*Set the Table*/
+    /* 设置Table */
     ui->tableWidget->setColumnCount(7);
     ui->tableWidget->verticalHeader()->setDefaultSectionSize(30);
-    QStringList title={"PID","Time","Source","Destination","Protocol","Length","Info"};
+    QStringList title={"PID","时间","源地址","目的地址","协议","长度","信息"};
     ui->tableWidget->setHorizontalHeaderLabels(title);
     ui->tableWidget->setColumnWidth(0,100);
     ui->tableWidget->setColumnWidth(1,100);
@@ -33,60 +33,58 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableWidget->setColumnWidth(4,100);
     ui->tableWidget->setColumnWidth(5,100);
     ui->tableWidget->setColumnWidth(6,350);
-    //ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tableWidget->setShowGrid(false);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    /*Set the TextEdit*/
+    /* 设置TextEdit */
     ui->textEdit->setFont(QFont(tr("Consolas"), 10));
     ui->textEdit_2->setFont(QFont(tr("Consolas"), 10));
     ui->textEdit->setReadOnly(true);
     ui->textEdit_2->setReadOnly(true);
 
-    /*Set the TreeWidget*/
+    /* 设置TreeWidget */
     ui->treeWidget->setFont(QFont(tr("Consolas"), 12));
     ui->treeWidget->setHeaderHidden(true);
 
-
+    /* 设置状态栏信息 */
     ui->statusbar->showMessage("欢迎使用电信2004班XHL小组开发的Sniffer");
 }
 
 
 MainWindow::~MainWindow()
 {
-    /*Stop the Work*/
+    /* 停止工作 */
     worker->control=false;
     worker->wait();
     pcap_close(devhandle);
 
-    /*Delet Everthing*/
+    /* 清除 */
     delete ui;
 }
 
 
 void MainWindow::on_pushButton_clicked()
 {
-                        /*Get Decice List*/
 
     pcap_if_t *d;
 
-        /* Retrieve the device list from the local machine */
+        /* 取得设备列表 */
         if (pcap_findalldevs(&alldevs, errbuf) == -1)
         {
             ui->comboBox->addItem("Error in pcap_findalldevs_ex:"+(QString)errbuf);
             exit(1);
         }
 
-        /* Print the list */
+        /* 打印至combox */
         ui->comboBox->clear();
-        ui->comboBox->addItem("choose card");
+        ui->comboBox->addItem("选择网卡");
         for (d = alldevs; d != NULL; d = d->next)
         {
-
             ui->comboBox->addItem((QString)d->name+(QString)d->description);
-
-
         }
+
+        /* 释放网卡信息 */
+        pcap_freealldevs(alldevs);
 
     return;
 
@@ -95,13 +93,13 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
-                        /*Stop the Work Temporarily*/
+    /* 停止抓包 */
 
-    /*Check the Work*/
+    /* 检查 */
    if(working==false)
        return;
 
-    /*Stop the Work*/
+    /* 停止 */
     worker->control=false;
     worker->wait();
     pcap_close(devhandle);
@@ -113,21 +111,21 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_pushButton_3_clicked()
 {
-                            /*Start the Capture*/
+    /* 开始抓包 */
 
 
-    /*Check the Index*/
+    /* 检查设备 */
     int index=ui->comboBox->currentIndex();
     if(index==0)
         return;
 
-    /*Stop the Last Work*/
+    /* 检查工作状态并重置 */
     if(working==true)
     {
         worker->control=false;
         worker->wait();
         pcap_close(devhandle);
-        /*clear last output*/
+
         ui->tableWidget->clearContents();
         ui->tableWidget->setRowCount(0);
         t_list.clear();
@@ -143,41 +141,39 @@ void MainWindow::on_pushButton_3_clicked()
         pkt_list.clear();
     }
 
-    /*Get the Choosen Device*/
+    /*获取选中的网卡*/
     int i=0;
     if(index!=0){
         for(device=alldevs;i++<index-1;device=device->next);
     }
 
-    /*Open the Choosen Device*/
-    if((devhandle= pcap_open_live(device->name,	// name of the device
-                                     65536,			// portion of the packet to capture.
-                                                    // 65536 grants that the whole packet will be captured on all the MACs.
-                                     1,				// promiscuous mode (nonzero means promiscuous)
-                                     1000,			// read timeout
-                                     errbuf			// error buffer
+    /* 打开选中的网卡设备 */
+    if((devhandle= pcap_open_live(device->name,     // 网卡设备名称
+                                     65536,			// 必须保留的包的长度：65536 保证了所有MAS上的包都会被完整捕获
+                                     1,				// 混杂模式：非0表示混杂
+                                     1000,			// 读取时延
+                                     errbuf
                                      ))==NULL)
     {
         statusBar()->showMessage("error");
         return;
     }
 
-    /*Check the Datalink*/
+    /*检查数据连接*/
     if(pcap_datalink(devhandle) != DLT_EN10MB)
     {
         statusBar()->showMessage("error");
         return;
     }
 
-    /*Set the Worker*/
+    /*启动线程*/
     worker->adhandle=devhandle;
 
-    /*Start the Work*/
     worker->control=true;
     worker->start();
     working=true;
 
-    /*Show some Message*/
+    /*显示监听状态*/
     QString status12="listening on ";
     status12.append(device->description);
     statusBar()->showMessage(status12);

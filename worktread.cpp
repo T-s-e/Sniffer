@@ -11,12 +11,11 @@ workthread::workthread(QObject * par):QThread(par)
 
 void workthread::run(){
 
-    /* handle the packet */
+    /* 处理包 */
     while(control){
 
             res = pcap_next_ex( adhandle, &header, &pkt_data);
             if(res == 0)
-                /* Timeout elapsed */
                 continue;
             if(res==PCAP_ERROR)
             {
@@ -43,7 +42,6 @@ void workthread::run(){
 
             /* send the message */
             emit pacinfo(info);
-
 
             /* char[16] timestr 16:31:10 /0 , tv_usec us,  len=caplen? */
             //etherdata_handle((ETHER_HEADER *)pkt_data);
