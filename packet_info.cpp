@@ -38,6 +38,8 @@ void packet_info::link_handle(char *raw_data){
     return;
 
 }
+
+
 void packet_info::net_handle(char *raw_data)
 {
     /*Handel Packet on Network Layer*/
@@ -111,6 +113,8 @@ void packet_info::net_handle(char *raw_data)
 
 
 }
+
+
 void packet_info::trans_handle(char *raw_data)
 {
     /*Handel Packet on Transport Layer*/
@@ -230,6 +234,8 @@ void packet_info::trans_handle(char *raw_data)
     return;
 
 }
+
+
 void packet_info::app_handle(char *raw_data)
 {
     /*Handel Packet on Application Layer (in fact not)*/
@@ -288,6 +294,8 @@ void packet_info::app_handle(char *raw_data)
     return;
 
 }
+
+
 QString packet_info::link_info(){
 
     /*Get Detail Infomation on Datalink Layer*/
@@ -298,6 +306,8 @@ QString packet_info::link_info(){
     QString res=link_protocol+" src: "+macsrc+" des: "+macdes+" type: "+net_protocol;
     return res;
 }
+
+
 QString* packet_info::net_info(){
 
     /*Get Detail Infomation on Network Layer*/
@@ -389,6 +399,8 @@ QString* packet_info::net_info(){
     }
 
 }
+
+
 QString *packet_info::trans_info(){
 
     /*Get Detail Infomation on Transport Layer*/
@@ -472,6 +484,8 @@ QString *packet_info::trans_info(){
     default:return NULL;
     }
 }
+
+
 QString *packet_info::app_info(){
 
     /*Get Detail Infomation on Application Layer*/
@@ -480,6 +494,8 @@ QString *packet_info::app_info(){
      res[1]="\0";
      return res;
 }
+
+
 QString byteToHex(u_char *str, int size, bool pos){
     QString res = "";
     char hexchar[17]="0123456789abcdef";
@@ -492,6 +508,8 @@ QString byteToHex(u_char *str, int size, bool pos){
     }
     return res;
 }
+
+
 QString macbyteToHex(u_char *str, int size){
     QString res = "";
     char hexchar[17]="0123456789abcdef";
@@ -504,11 +522,15 @@ QString macbyteToHex(u_char *str, int size){
     res.chop(1);
     return res;
 }
+
+
 QString getip(u_int addr){
     sockaddr_in srcAddr;
     srcAddr.sin_addr.s_addr = addr;
     return QString(inet_ntoa(srcAddr.sin_addr));
 }
+
+
 QString getipv6(u_char* addr){
     in6_addr *temp=(in6_addr*)addr;
     char buffer[50];

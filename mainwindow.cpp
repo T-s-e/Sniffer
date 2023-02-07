@@ -48,8 +48,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->setHeaderHidden(true);
 
 
-
+    ui->statusbar->showMessage("欢迎使用电信2004班XHL小组开发的Sniffer");
 }
+
 
 MainWindow::~MainWindow()
 {
@@ -92,11 +93,6 @@ void MainWindow::on_pushButton_clicked()
 }
 
 
-
-
-
-
-
 void MainWindow::on_pushButton_2_clicked()
 {
                         /*Stop the Work Temporarily*/
@@ -113,6 +109,7 @@ void MainWindow::on_pushButton_2_clicked()
     statusBar()->showMessage("stop");
     return;
 }
+
 
 void MainWindow::on_pushButton_3_clicked()
 {
@@ -187,6 +184,7 @@ void MainWindow::on_pushButton_3_clicked()
     return;
 
 }
+
 
 void MainWindow::handleResults(packet_info* result){
         /*Handle the Captured Pcaket*/
@@ -280,6 +278,8 @@ void MainWindow::handleResults(packet_info* result){
     t_num++;
     return;
 }
+
+
 void MainWindow::handleError(char* result){
 
     /*Handle Error and Stop the Work*/
@@ -296,7 +296,6 @@ void MainWindow::handleError(char* result){
     working=false;
     return;
 }
-
 
 
 void MainWindow::on_tableWidget_cellClicked(int row, int column)
@@ -392,8 +391,6 @@ void MainWindow::on_tableWidget_cellClicked(int row, int column)
 }
 
 
-
-
 void MainWindow::on_pushButton_4_clicked()
 {
     /*Reset the Filter and Refresh Table*/
@@ -405,12 +402,15 @@ void MainWindow::on_pushButton_4_clicked()
        return;
 
 }
+
+
 void MainWindow::refresh_control(){
     /*Wake Refresh Function Up*/
     refresh_con=10;
     return;
 
 }
+
 
 void MainWindow::refresh_applist(){
     /*Refresh the Process List According to Falg*/
@@ -471,6 +471,7 @@ void MainWindow::refresh_applist(){
         return;
 }
 
+
 bool AdjustPrivileges() {
     /*Get Higher Privilege to Get Pid*/
     HANDLE hToken;
@@ -500,6 +501,7 @@ bool AdjustPrivileges() {
     CloseHandle(hToken);
     return true;
 }
+
 
 void MainWindow::on_tableWidget_cellDoubleClicked(int row, int column)
 {
@@ -546,6 +548,8 @@ void MainWindow::on_tableWidget_cellDoubleClicked(int row, int column)
     }
     return;
 }
+
+
 void MainWindow::filter_packet(){
 
     /* Refresh Table According to Filter */
