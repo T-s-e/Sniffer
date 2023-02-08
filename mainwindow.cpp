@@ -149,8 +149,8 @@ void MainWindow::on_pushButton_3_clicked()
 
     /* 打开选中的网卡设备 */
     if((devhandle= pcap_open_live(device->name,     // 网卡设备名称
-                                     65536,			// 必须保留的包的长度：65536 保证了所有MAS上的包都会被完整捕获
-                                     1,				// 混杂模式：非0表示混杂
+                                     65536,			// 必须保留的包的长度
+                                     1,				// 混杂模式
                                      1000,			// 读取时延
                                      errbuf
                                      ))==NULL)
@@ -235,25 +235,25 @@ void MainWindow::handleResults(packet_info* result){
     /*Set the Color According to Protocol*/
     QColor color;
     if(result->protocol == "TCP"){
-        color = QColor(216,191,216);
+        color = QColor(221,160,221);
     }else if(result->protocol == "IP"){
-        color = QColor(144,238,144);
+        color = QColor(176,224,230);
     }
     else if(result->protocol == "HTTP"){
-        color = QColor(238,238,0);
+        color = QColor(238,232,170);
     }
     else if(result->protocol == "DNS"){
-        color = QColor(255,255,224);
+        color = QColor(152,251,152);
     }else if(result->protocol == "UDP"){
-        color = QColor(210,149,10);
+        color = QColor(255,182,193);
     }else if(result->protocol == "ARP"){
-        color = QColor(210,19,210);
+        color = QColor(255,160,122);
     }else if(result->protocol == "SSDP"){
-        color = QColor(20,149,210);
+        color = QColor(32,178,170);
     }else if(result->protocol == "HTTPS"){
-        color = QColor(210,149,210);
+        color = QColor(135,206,250);
     }else{
-        color = QColor(0,218,185);
+        color = QColor(119,136,153);
     }
 
     /*Insert Packet Information to Table*/
